@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chainway RFID — C5 + URA4 Inventory Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --c5-orange: #FF6820;
+  --ura4-blue: #00C8FF;
+  --bg: #080b12;
+  --surface: rgba(10,14,22,0.85);
+  --border-o: rgba(255,104,32,0.3);
+  --border-b: rgba(0,200,255,0.3);
+  --text-dim: rgba(255,255,255,0.45);
+  --text-bright: #f0f4ff;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text-bright);
+  font-family: 'Rajdhani', sans-serif;
+  overflow-x: hidden;
+}
+
+canvas#bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#content {
+  position: relative;
+  z-index: 10;
+}
+
+/* ── HERO ────────────────────────────────────── */
+#hero {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 8vw;
+}
+
+.hero-left {
+  max-width: 560px;
+}
+
+.hero-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  color: var(--c5-orange);
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 32px; height: 1px;
+  background: var(--c5-orange);
+}
+
+.hero-eyebrow::after {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--c5-orange);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.3; transform:scale(0.5); }
+}
+
+.hero-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(4rem, 9vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: 0.02em;
+  color: #fff;
+  margin-bottom: 0.4em;
+}
+
+.hero-title .accent-o { color: var(--c5-orange); }
+.hero-title .accent-b { color: var(--ura4-blue); }
+
+.hero-subtitle {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+  border-left: 2px solid var(--c5-orange);
+  padding-left: 1rem;
+}
+
+.hero-subtitle strong { color: var(--text-bright); }
+
+.hero-badges {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid;
+  text-transform: uppercase;
+  background: transparent;
+}
+
+.badge.orange { border-color: var(--c5-orange); color: var(--c5-orange); }
+.badge.blue   { border-color: var(--ura4-blue); color: var(--ura4-blue); }
+.badge.white  { border-color: rgba(255,255,255,0.3); color: var(--text-dim); }
+
+.scroll-hint {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  animation: fadeFloat 2.5s ease-in-out infinite;
+}
+
+.scroll-hint svg { animation: bounceY 2.5s ease-in-out infinite; }
+
+@keyframes fadeFloat {
+  0%,100% { opacity:0.6; }
+  50% { opacity:1; }
+}
+@keyframes bounceY {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(5px); }
+}
+
+/* ── SPEC HEADER ─────────────────────────────── */
+.section-header {
+  text-align: center;
+  padding: 7rem 5vw 3rem;
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  letter-spacing: 0.04em;
+  color: #fff;
+  line-height: 1;
+}
+
+/* ── SPECS ───────────────────────────────────── */
+#specs {
+  padding: 4rem 5vw 10rem;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 80px 1fr;
+  gap: 0;
+  max-width: 1300px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.device-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.device-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,104,32,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.device-card.c5 {
+  background: rgba(255,104,32,0.04);
+  border: 1px solid var(--border-o);
+  border-right: none;
+}
+
+.device-card.ura4 {
+  background: rgba(0,200,255,0.04);
+  border: 1px solid var(--border-b);
+  border-left: none;
+}
+
+.device-card.ura4::before {
+  background: linear-gradient(135deg, rgba(0,200,255,0.05) 0%, transparent 60%);
+}
+
+.card-type {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.c5 .card-type  { color: var(--c5-orange); }
+.ura4 .card-type { color: var(--ura4-blue); }
+
+.card-model {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 5rem;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+}
+
+.c5 .card-model  { color: var(--c5-orange); }
+.ura4 .card-model { color: var(--ura4-blue); }
+
+.card-tagline {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 2rem;
+}
+
+.spec-table tr {
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s;
+}
+
+.spec-table tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.spec-table td {
+  padding: 0.6rem 0;
+  font-size: 0.78rem;
+  vertical-align: top;
+}
+
+.spec-table td:first-child {
+  color: var(--text-dim);
+  width: 42%;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding-right: 1rem;
+}
+
+.c5  .spec-table td:last-child { color: var(--text-bright); }
+.ura4 .spec-table td:last-child { color: var(--text-bright); }
+
+.spec-table .highlight-o td:last-child { color: var(--c5-orange); font-weight: 600; }
+.spec-table .highlight-b td:last-child { color: var(--ura4-blue); font-weight: 600; }
+
+.use-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.use-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  padding: 0.25rem 0.7rem;
+  text-transform: uppercase;
+}
+
+.c5 .use-tag  { border: 1px solid rgba(255,104,32,0.4); color: rgba(255,104,32,0.8); }
+.ura4 .use-tag { border: 1px solid rgba(0,200,255,0.4); color: rgba(0,200,255,0.8); }
+
+/* Divider column */
+.specs-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 3rem;
+  gap: 0.5rem;
+}
+
+.divider-vs {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  color: var(--text-dim);
+  writing-mode: vertical-lr;
+  letter-spacing: 0.2em;
+}
+
+.divider-line {
+  width: 1px;
+  flex: 1;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent);
+  min-height: 80px;
+}
+
+/* ── SOLUTION ────────────────────────────────── */
+#solution {
+  padding: 6rem 5vw 10rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.solution-intro {
+  max-width: 640px;
+  margin-bottom: 5rem;
+}
+
+.solution-intro p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.solution-intro p strong {
+  color: var(--text-bright);
+}
+
+.flow-grid {
+  display: grid;
+  grid-template-columns: 1fr 40px 1fr 40px 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+
+.flow-node {
+  background: rgba(15,20,32,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 2rem;
+  position: relative;
+  transition: border-color 0.3s;
+}
+
+.flow-node:hover { border-color: rgba(255,255,255,0.2); }
+
+.flow-node-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 5rem;
+  line-height: 1;
+  position: absolute;
+  right: 1.2rem;
+  top: 0.8rem;
+  opacity: 0.06;
+}
+
+.flow-node-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.flow-node-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.flow-node-body {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.flow-node-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  margin-top: 1rem;
+  padding: 0.2rem 0.6rem;
+  display: inline-block;
+  text-transform: uppercase;
+}
+
+.flow-node.n1 { border-top: 2px solid var(--ura4-blue); }
+.flow-node.n1 .flow-node-title { color: var(--ura4-blue); }
+.flow-node.n1 .flow-node-tag { border: 1px solid var(--border-b); color: var(--ura4-blue); }
+
+.flow-node.n2 { border-top: 2px solid var(--c5-orange); }
+.flow-node.n2 .flow-node-title { color: var(--c5-orange); }
+.flow-node.n2 .flow-node-tag { border: 1px solid var(--border-o); color: var(--c5-orange); }
+
+.flow-node.n3 { border-top: 2px solid rgba(255,255,255,0.4); }
+.flow-node.n3 .flow-node-title { color: #fff; }
+.flow-node.n3 .flow-node-tag { border: 1px solid rgba(255,255,255,0.2); color: var(--text-dim); }
+
+.flow-arrow {
+  text-align: center;
+  font-size: 1.4rem;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+/* ── METRICS ─────────────────────────────────── */
+#metrics {
+  padding: 6rem 5vw;
+  background: rgba(255,255,255,0.02);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.metrics-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3rem;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metric-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 4rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.metric-val.orange { color: var(--c5-orange); }
+.metric-val.blue   { color: var(--ura4-blue); }
+.metric-val.white  { color: #fff; }
+
+.metric-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ── CTA ─────────────────────────────────────── */
+#cta {
+  padding: 8rem 5vw;
+  text-align: center;
+}
+
+.cta-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 6vw, 5rem);
+  letter-spacing: 0.05em;
+  margin-bottom: 1.2rem;
+}
+
+.cta-sub {
+  color: var(--text-dim);
+  font-size: 1.05rem;
+  margin-bottom: 3rem;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 1rem 2.5rem;
+  background: var(--c5-orange);
+  color: #000;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: opacity 0.2s, transform 0.2s;
+  font-weight: 600;
+}
+
+.btn-primary:hover { opacity:0.85; transform:translateY(-2px); }
+
+.btn-ghost {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 1rem 2.5rem;
+  background: transparent;
+  color: var(--ura4-blue);
+  border: 1px solid var(--ura4-blue);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.btn-ghost:hover { background: rgba(0,200,255,0.08); transform:translateY(-2px); }
+
+/* ── FOOTER ──────────────────────────────────── */
+footer {
+  padding: 3rem 5vw;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footer-logo {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.5rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.footer-logo span { color: var(--c5-orange); }
+
+.footer-copy {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 900px) {
+  .specs-grid { grid-template-columns: 1fr; }
+  .specs-divider { flex-direction: row; writing-mode: initial; padding: 1rem 0; }
+  .divider-vs { writing-mode: initial; font-size: 2rem; }
+  .divider-line { width: 60px; height: 1px; min-height: 0; }
+  .device-card.c5, .device-card.ura4 { border: 1px solid; }
+  .device-card.c5 { border-color: var(--border-o); }
+  .device-card.ura4 { border-color: var(--border-b); }
+  .flow-grid { grid-template-columns: 1fr; }
+  .flow-arrow { transform: rotate(90deg); }
+  .metrics-inner { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="content">
+
+  <!-- ── HERO ── -->
+  <section id="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Chainway RFID Inventory Solution</div>
+      <h1 class="hero-title">
+        INVENTORY<br>
+        <span class="accent-o">INTEL</span><span class="accent-b">LIGENCE</span>
+      </h1>
+      <p class="hero-subtitle">
+        Two devices. One ecosystem.<br>
+        <strong>C5 Handheld + URA4 Fixed Reader</strong> — real-time RFID tracking<br>
+        from dock door to every shelf, zero blind spots.
+      </p>
+      <div class="hero-badges">
+        <span class="badge orange">Impinj Gen2X</span>
+        <span class="badge orange">30m Read Range</span>
+        <span class="badge blue">900+ Tags/sec</span>
+        <span class="badge blue">4-Channel Fixed</span>
+        <span class="badge white">Android 11–13</span>
+        <span class="badge white">ERP/WMS Ready</span>
+      </div>
+      <div class="scroll-hint">
+        <svg width="16" height="24" viewBox="0 0 16 24" fill="none">
+          <rect x="0.5" y="0.5" width="15" height="23" rx="7.5" stroke="rgba(255,255,255,0.3)"/>
+          <rect x="7" y="4" width="2" height="5" rx="1" fill="rgba(255,255,255,0.4)"/>
+        </svg>
+        Scroll to explore specifications
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DEVICE SPECS ── -->
+  <div class="section-header">
+    <div class="section-label">Product Specifications</div>
+    <h2 class="section-title">THE TWO DEVICES</h2>
+  </div>
+
+  <section id="specs">
+    <div class="specs-grid">
+
+      <!-- C5 -->
+      <div class="device-card c5">
+        <div class="card-type">Handheld · Mobile · Field</div>
+        <div class="card-model">C5</div>
+        <div class="card-tagline">Most Powerful 5G Handheld UHF RFID Reader<br>Impinj E710 · Android 11/13 · IP67 Rugged</div>
+
+        <table class="spec-table">
+          <tr><td>OS</td><td>Android 11 / 13</td></tr>
+          <tr><td>Processor</td><td>Octa-core 2.3GHz (MT6765)</td></tr>
+          <tr><td>Memory</td><td>4GB RAM + 64GB (expandable)</td></tr>
+          <tr class="highlight-o"><td>RFID Chip</td><td>Impinj E710 (E Series)</td></tr>
+          <tr class="highlight-o"><td>Protocol</td><td>Impinj Gen2X / ISO 18000-6C</td></tr>
+          <tr class="highlight-o"><td>Read Range</td><td>Up to 30 metres</td></tr>
+          <tr><td>Display</td><td>6" HD screen (5" fingerprint version)</td></tr>
+          <tr><td>Battery</td><td>6,700mAh removable (13,400mAh opt.)</td></tr>
+          <tr><td>Connectivity</td><td>5G · Wi-Fi · Bluetooth · GPS · NFC</td></tr>
+          <tr><td>Barcode</td><td>1D / 2D scanning (Zebra optional)</td></tr>
+          <tr><td>Security</td><td>Fingerprint + Dual PSAM slots</td></tr>
+          <tr><td>Camera</td><td>5MP front · 13MP rear autofocus</td></tr>
+          <tr><td>Grip Style</td><td>Pistol-grip + touchscreen</td></tr>
+          <tr><td>Durability</td><td>IP67 · Drop-resistant · MIL-spec</td></tr>
+          <tr><td>Connectivity Port</td><td>Type-C · DC charging · CRD cradle</td></tr>
+        </table>
+
+        <div class="use-tags">
+          <span class="use-tag">Warehousing</span>
+          <span class="use-tag">Retail</span>
+          <span class="use-tag">Banking</span>
+          <span class="use-tag">Logistics</span>
+          <span class="use-tag">Public Security</span>
+        </div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div class="specs-divider">
+        <div class="divider-line"></div>
+        <div class="divider-vs">VS</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- URA4 -->
+      <div class="device-card ura4">
+        <div class="card-type">Fixed · Infrastructure · 24/7</div>
+        <div class="card-model">URA4</div>
+        <div class="card-tagline">4-Channel Fixed UHF RFID Reader with Android OS<br>Impinj E Series · Android 9/13 · Industrial 24/7</div>
+
+        <table class="spec-table">
+          <tr><td>OS</td><td>Android 9 / Android 13</td></tr>
+          <tr class="highlight-b"><td>RFID Chip</td><td>Impinj E Series (E710)</td></tr>
+          <tr class="highlight-b"><td>Protocol</td><td>Impinj Gen2X / ISO 18000-6C</td></tr>
+          <tr class="highlight-b"><td>Antenna Ports</td><td>4 × 50Ω SMA port</td></tr>
+          <tr class="highlight-b"><td>Read Speed</td><td>900+ tags / second</td></tr>
+          <tr><td>Output Power</td><td>30 dBm (1W) · 33 dBm optional</td></tr>
+          <tr><td>Power Precision</td><td>±1 dB</td></tr>
+          <tr><td>Receive Sensitivity</td><td>&lt; −84 dBm (RSSI supported)</td></tr>
+          <tr><td>Interfaces</td><td>RS232 · RJ45 · HDMI · GPIO</td></tr>
+          <tr><td>Network</td><td>Ethernet (RJ45) · Wi-Fi optional</td></tr>
+          <tr><td>Integration</td><td>ERP · WMS · Industrial automation</td></tr>
+          <tr><td>Operation</td><td>24/7 continuous · EMI resistant</td></tr>
+          <tr><td>Antenna Detector</td><td>Supported</td></tr>
+          <tr><td>Temp Monitor</td><td>Ambient sensor built-in</td></tr>
+          <tr><td>Mounting</td><td>Rack / wall · DIN rail compatible</td></tr>
+        </table>
+
+        <div class="use-tags">
+          <span class="use-tag">Dock Doors</span>
+          <span class="use-tag">Archives</span>
+          <span class="use-tag">Production Line</span>
+          <span class="use-tag">Smart Cabinet</span>
+          <span class="use-tag">Library</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── METRICS ── -->
+  <section id="metrics">
+    <div class="metrics-inner">
+      <div class="metric">
+        <div class="metric-val orange">30m</div>
+        <div class="metric-label">C5 Max<br>Read Range</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val blue">900+</div>
+        <div class="metric-label">URA4 Tags<br>per Second</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val white">4</div>
+        <div class="metric-label">URA4 Antenna<br>Channels (SMA)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-val orange">13.4Ah</div>
+        <div class="metric-label">C5 Max<br>Battery Option</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SOLUTION ── -->
+  <div class="section-header">
+    <div class="section-label">Inventory Management Solution</div>
+    <h2 class="section-title">HOW THEY WORK TOGETHER</h2>
+  </div>
+
+  <section id="solution">
+    <div class="solution-intro">
+      <p>
+        The <strong>URA4 fixed reader</strong> acts as your always-on infrastructure — stationed at dock doors, gates, and checkpoints, automatically scanning hundreds of tags per second without staff intervention. The <strong>C5 handheld</strong> empowers your team for active tasks — cycle counts, picking, put-away, and exception handling with a 30m read range.
+      </p>
+    </div>
+
+    <div class="flow-grid">
+      <div class="flow-node n1">
+        <div class="flow-node-num">01</div>
+        <div class="flow-node-icon">🏭</div>
+        <div class="flow-node-title">Fixed Infrastructure</div>
+        <div class="flow-node-body">URA4 mounted at dock doors, conveyor gates, and storage entry points. Reads 900+ RFID tags/sec as pallets and bins pass through — fully automated, zero manual effort.</div>
+        <span class="flow-node-tag">URA4 · 24/7 Continuous</span>
+      </div>
+
+      <div class="flow-arrow">→</div>
+
+      <div class="flow-node n2">
+        <div class="flow-node-num">02</div>
+        <div class="flow-node-icon">📱</div>
+        <div class="flow-node-title">Mobile Field Work</div>
+        <div class="flow-node-body">C5 handheld used by warehouse staff for cycle counting, targeted inventory searches, put-away confirmation, and exception resolution across the floor — up to 30m range via 5G/Wi-Fi sync.</div>
+        <span class="flow-node-tag">C5 · Mobile · 5G Sync</span>
+      </div>
+
+      <div class="flow-arrow">→</div>
+
+      <div class="flow-node n3">
+        <div class="flow-node-num">03</div>
+        <div class="flow-node-icon">☁️</div>
+        <div class="flow-node-title">Unified Visibility</div>
+        <div class="flow-node-body">Both devices stream to your WMS / ERP in real time via Ethernet, 5G, or Wi-Fi. Complete inventory picture: what's arriving, where it's stored, what's shipped — with full audit trail and RSSI location data.</div>
+        <span class="flow-node-tag">WMS · ERP · Real-time</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ── -->
+  <section id="cta">
+    <h2 class="cta-title">DEPLOY YOUR<br><span style="color:var(--c5-orange)">RFID</span> SOLUTION</h2>
+    <p class="cta-sub">
+      Combine the C5's mobile intelligence with URA4's fixed infrastructure for complete, automated inventory visibility — from receiving dock to final shelf.
+    </p>
+    <div class="cta-buttons">
+      <a href="https://www.chainway.net/Products/Info/142" target="_blank" class="btn-primary">Explore C5 →</a>
+      <a href="https://www.chainway.net/Products/Info/105" target="_blank" class="btn-ghost">Explore URA4 →</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">CHAIN<span>WAY</span> RFID</div>
+    <div class="footer-copy">C5 UHF RFID READER · URA4 FIXED RFID READER · IMPINJ GEN2X ECOSYSTEM</div>
+  </footer>
+
+</div><!-- /#content -->
+
+<script>
+// ── THREE.JS SCENE ────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('bg');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x080b12);
+scene.fog = new THREE.FogExp2(0x080b12, 0.055);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.01, 100);
+camera.position.set(0, 0, 9);
+
+// ── LIGHTS ──
+const ambient = new THREE.AmbientLight(0x112244, 0.7);
+scene.add(ambient);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+dirLight.position.set(6, 8, 5);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+const orangeLight = new THREE.PointLight(0xFF6820, 3.5, 12);
+orangeLight.position.set(-4, 2, 5);
+scene.add(orangeLight);
+
+const blueLight = new THREE.PointLight(0x00C8FF, 3.0, 12);
+blueLight.position.set(4, -2, 5);
+scene.add(blueLight);
+
+const fillLight = new THREE.PointLight(0x001133, 1.2, 20);
+fillLight.position.set(0, -5, 3);
+scene.add(fillLight);
+
+// ── MATERIALS ──
+const matGray    = new THREE.MeshStandardMaterial({ color:0x252830, metalness:0.65, roughness:0.38 });
+const matDark    = new THREE.MeshStandardMaterial({ color:0x181c24, metalness:0.7, roughness:0.3 });
+const matOrange  = new THREE.MeshStandardMaterial({ color:0xFF6820, metalness:0.5, roughness:0.4, emissive:0xFF6820, emissiveIntensity:0.6 });
+const matBlue    = new THREE.MeshStandardMaterial({ color:0x00C8FF, metalness:0.6, roughness:0.3, emissive:0x00C8FF, emissiveIntensity:0.7 });
+const matScreen  = new THREE.MeshStandardMaterial({ color:0x001a44, metalness:0.1, roughness:0.9, emissive:0x002266, emissiveIntensity:0.8 });
+const matPort    = new THREE.MeshStandardMaterial({ color:0x33384a, metalness:0.85, roughness:0.25 });
+const matLedG    = new THREE.MeshStandardMaterial({ color:0x00ff66, emissive:0x00ff66, emissiveIntensity:1.5, metalness:0, roughness:1 });
+const matLedO    = new THREE.MeshStandardMaterial({ color:0xFF6820, emissive:0xFF6820, emissiveIntensity:1.5, metalness:0, roughness:1 });
+const matLedB    = new THREE.MeshStandardMaterial({ color:0x00C8FF, emissive:0x00C8FF, emissiveIntensity:1.5, metalness:0, roughness:1 });
+const matFace    = new THREE.MeshStandardMaterial({ color:0x1c2130, metalness:0.4, roughness:0.6 });
+
+// ── C5 MODEL (Pistol-grip Handheld RFID Reader) ──
+function buildC5() {
+  const g = new THREE.Group();
+
+  // Main body — tall block
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.1, 0.52), matGray.clone());
+  body.position.y = 0.6;
+  body.castShadow = true;
+  g.add(body);
+
+  // Screen inset
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.35, 0.06), matScreen.clone());
+  screen.position.set(0, 0.85, 0.3);
+  g.add(screen);
+
+  // Screen glow plane
+  const screenGlow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.88, 1.35),
+    new THREE.MeshBasicMaterial({ color:0x0044ff, transparent:true, opacity:0.08 })
+  );
+  screenGlow.position.set(0, 0.85, 0.31);
+  g.add(screenGlow);
+
+  // Top antenna module
+  const topBlock = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.42, 0.48), matDark.clone());
+  topBlock.position.set(0, 1.76, 0);
+  g.add(topBlock);
+
+  // Antenna ridge on top
+  const antRidge = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.08, 0.42), matGray.clone());
+  antRidge.position.set(0, 1.98, 0);
+  g.add(antRidge);
+
+  // Small 5G antenna nub
+  const antNub = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.38, 12), matDark.clone());
+  antNub.position.set(-0.42, 2.18, 0);
+  g.add(antNub);
+
+  // Orange accent stripe (body)
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.09, 0.54), matOrange.clone());
+  stripe.position.set(0, 1.12, 0);
+  g.add(stripe);
+
+  // Lower orange stripe
+  const stripe2 = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.05, 0.54), matOrange.clone());
+  stripe2.position.set(0, 0.04, 0);
+  g.add(stripe2);
+
+  // Handle (pistol grip)
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.22, 0.48), matGray.clone());
+  handle.position.set(0.08, -0.88, 0);
+  handle.rotation.z = -0.12;
+  handle.castShadow = true;
+  g.add(handle);
+
+  // Handle accent
+  const hAccent = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.06, 0.5), matOrange.clone());
+  hAccent.position.set(0.08, -0.28, 0);
+  hAccent.rotation.z = -0.12;
+  g.add(hAccent);
+
+  // Trigger guard
+  const trigGuard = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42, 0.18), matDark.clone());
+  trigGuard.position.set(0.62, -0.12, 0);
+  g.add(trigGuard);
+
+  // Trigger
+  const trigger = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.22, 0.14), matOrange.clone());
+  trigger.position.set(0.56, -0.02, 0);
+  g.add(trigger);
+
+  // Body-handle connector bridge
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.18, 0.52), matGray.clone());
+  bridge.position.set(0.0, 0.04, 0);
+  g.add(bridge);
+
+  // Side buttons (left)
+  const btnL1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.16), matOrange.clone());
+  btnL1.position.set(-0.6, 0.7, 0);
+  g.add(btnL1);
+  const btnL2 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.14), matDark.clone());
+  btnL2.position.set(-0.6, 0.4, 0);
+  g.add(btnL2);
+
+  // Camera bump (rear)
+  const cam = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.08, 16), matDark.clone());
+  cam.rotation.x = Math.PI/2;
+  cam.position.set(0.35, 1.5, -0.32);
+  g.add(cam);
+  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.04, 16),
+    new THREE.MeshStandardMaterial({ color:0x111111, metalness:0.9, roughness:0.1 }));
+  lens.rotation.x = Math.PI/2;
+  lens.position.set(0.35, 1.5, -0.37);
+  g.add(lens);
+
+  // LED indicators (top front)
+  [0xff4400, 0x00ff88, 0x0099ff].forEach((c, i) => {
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8),
+      new THREE.MeshStandardMaterial({ color:c, emissive:c, emissiveIntensity:2, roughness:1 }));
+    led.position.set(-0.24 + i*0.24, 1.97, 0.27);
+    g.add(led);
+  });
+
+  // Speaker grille (bottom handle)
+  for (let i=0; i<5; i++) {
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.008, 0.22),
+      new THREE.MeshStandardMaterial({ color:0x111418, metalness:0.5 }));
+    grill.position.set(-0.1 + i*0.07, -1.42, 0);
+    g.add(grill);
+  }
+
+  return g;
+}
+
+// ── URA4 MODEL (Fixed 4-channel RFID Reader) ──
+function buildURA4() {
+  const g = new THREE.Group();
+
+  // Main chassis
+  const chassis = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.1, 0.72), matDark.clone());
+  chassis.castShadow = true;
+  g.add(chassis);
+
+  // Front face panel
+  const face = new THREE.Mesh(new THREE.BoxGeometry(3.28, 0.98, 0.06), matFace.clone());
+  face.position.z = 0.39;
+  g.add(face);
+
+  // Front accent border
+  const border = new THREE.Mesh(new THREE.BoxGeometry(3.38, 1.08, 0.05),
+    new THREE.MeshStandardMaterial({ color:0x00C8FF, metalness:0.8, roughness:0.2, emissive:0x00C8FF, emissiveIntensity:0.12 }));
+  border.position.z = 0.362;
+  // Hollow out by using 4 thin edge bars instead:
+  const edgeH = new THREE.Mesh(new THREE.BoxGeometry(3.38, 0.04, 0.04), matBlue.clone());
+  const edgeH2 = edgeH.clone();
+  edgeH.position.set(0, 0.54, 0.37);
+  edgeH2.position.set(0, -0.54, 0.37);
+  g.add(edgeH); g.add(edgeH2);
+  const edgeV = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.1, 0.04), matBlue.clone());
+  const edgeV2 = edgeV.clone();
+  edgeV.position.set(-1.69, 0, 0.37);
+  edgeV2.position.set(1.69, 0, 0.37);
+  g.add(edgeV); g.add(edgeV2);
+
+  // 4 × SMA Antenna ports (top-front)
+  for (let i = 0; i < 4; i++) {
+    const x = -1.2 + i * 0.8;
+
+    // Port tube
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.22, 16), matPort.clone());
+    tube.rotation.x = Math.PI/2;
+    tube.position.set(x, 0.3, 0.52);
+    g.add(tube);
+
+    // Port collar ring
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.018, 8, 20), matBlue.clone());
+    collar.position.set(x, 0.3, 0.41);
+    g.add(collar);
+
+    // Inner dark hole
+    const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.08, 12),
+      new THREE.MeshStandardMaterial({ color:0x050810, roughness:1 }));
+    hole.rotation.x = Math.PI/2;
+    hole.position.set(x, 0.3, 0.62);
+    g.add(hole);
+
+    // LED below each port
+    const leds = [matLedG, matLedG, matLedO, matLedB];
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), leds[i]);
+    led.position.set(x, 0.1, 0.41);
+    g.add(led);
+
+    // Port label text (small rect representing label)
+    const lbl = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.01),
+      new THREE.MeshStandardMaterial({ color:0xffffff, emissive:0xffffff, emissiveIntensity:0.2 }));
+    lbl.position.set(x, -0.02, 0.42);
+    g.add(lbl);
+  }
+
+  // Interface ports (right side)
+  // RJ45
+  const rj45 = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.16, 0.12), matPort.clone());
+  rj45.position.set(1.72, 0.15, 0);
+  g.add(rj45);
+  const rj45h = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.1, 0.04),
+    new THREE.MeshStandardMaterial({ color:0x050810, roughness:1 }));
+  rj45h.position.set(1.72, 0.15, 0.08);
+  g.add(rj45h);
+
+  // RS232
+  const rs = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.12), matPort.clone());
+  rs.position.set(1.72, -0.12, 0);
+  g.add(rs);
+
+  // HDMI port
+  const hdmi = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.1), matPort.clone());
+  hdmi.position.set(1.72, -0.34, 0);
+  g.add(hdmi);
+
+  // GPIO strip
+  const gpio = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.1), matPort.clone());
+  gpio.position.set(1.72, 0.45, 0);
+  g.add(gpio);
+
+  // Left side — power input
+  const pwr = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.1, 12), matPort.clone());
+  pwr.rotation.z = Math.PI/2;
+  pwr.position.set(-1.72, -0.2, 0);
+  g.add(pwr);
+
+  // Chainway logo area (blue bar)
+  const logoBar = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.07, 0.04), matBlue.clone());
+  logoBar.position.set(-0.85, -0.35, 0.42);
+  g.add(logoBar);
+
+  // Model label dots
+  for (let i=0; i<3; i++) {
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), matBlue.clone());
+    dot.position.set(-0.32 + i*0.18, -0.35, 0.42);
+    g.add(dot);
+  }
+
+  // Heat vent slots (rear)
+  for (let row=0; row<3; row++) {
+    for (let col=0; col<12; col++) {
+      const vent = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 0.01),
+        new THREE.MeshStandardMaterial({ color:0x0a0e18, roughness:1 }));
+      vent.position.set(-1.5 + col * 0.26, 0.35 - row * 0.2, -0.37);
+      g.add(vent);
+    }
+  }
+
+  // Mounting bracket
+  const bracket = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.14, 0.66),
+    new THREE.MeshStandardMaterial({ color:0x12151e, metalness:0.8, roughness:0.35 }));
+  bracket.position.y = -0.63;
+  g.add(bracket);
+
+  // Rubber feet
+  for (let i=0; i<4; i++) {
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.04, 8),
+      new THREE.MeshStandardMaterial({ color:0x111111, roughness:1 }));
+    foot.position.set(-1.3 + i*0.87, -0.72, 0.26);
+    g.add(foot);
+  }
+
+  return g;
+}
+
+// ── BUILD SCENE ──
+const c5Group  = buildC5();
+const ura4Group = buildURA4();
+
+// Initial positions
+c5Group.position.set(3.2, -0.3, 0);
+c5Group.rotation.y = -0.4;
+c5Group.rotation.x = 0.05;
+ura4Group.position.set(0, 2.5, -2);
+ura4Group.rotation.x = 0.35;
+ura4Group.scale.setScalar(0.85);
+
+scene.add(c5Group);
+scene.add(ura4Group);
+
+// ── RFID WAVE RINGS (from C5) ──
+const waves = [];
+for (let i=0; i<5; i++) {
+  const geo = new THREE.RingGeometry(0.2, 0.26, 48);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0xFF6820, transparent: true, opacity: 0, side: THREE.DoubleSide
+  });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.rotation.x = -Math.PI/2;
+  ring.userData.phase = i / 5;
+  ring.userData.scale = 0;
+  c5Group.add(ring);
+  ring.position.set(0, 1.8, 0);
+  waves.push(ring);
+}
+
+// ── RFID WAVE RINGS (from URA4 — wider, emanating forward) ──
+const ura4Waves = [];
+for (let i=0; i<4; i++) {
+  const geo = new THREE.RingGeometry(0.3, 0.38, 48);
+  const mat = new THREE.MeshBasicMaterial({
+    color: 0x00C8FF, transparent: true, opacity: 0, side: THREE.DoubleSide
+  });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.userData.phase = i/4;
+  ring.userData.scale = 0;
+  ura4Group.add(ring);
+  ring.position.set(0, 0, 0.6);
+  ura4Waves.push(ring);
+}
+
+// ── PARTICLE FIELD ──
+const PARTICLE_COUNT = 2200;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(PARTICLE_COUNT * 3);
+const pCol = new Float32Array(PARTICLE_COUNT * 3);
+for (let i=0; i<PARTICLE_COUNT; i++) {
+  const r = Math.random();
+  pPos[i*3]   = (Math.random()-0.5)*30;
+  pPos[i*3+1] = (Math.random()-0.5)*20;
+  pPos[i*3+2] = (Math.random()-0.5)*14 - 4;
+  // Orange/blue mix
+  if (r < 0.4) { pCol[i*3]=1.0; pCol[i*3+1]=0.4; pCol[i*3+2]=0.12; }
+  else if (r < 0.75) { pCol[i*3]=0.0; pCol[i*3+1]=0.78; pCol[i*3+2]=1.0; }
+  else { pCol[i*3]=0.15; pCol[i*3+1]=0.2; pCol[i*3+2]=0.4; }
+}
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+const pMat = new THREE.PointsMaterial({ size:0.042, vertexColors:true, transparent:true, opacity:0.65, sizeAttenuation:true });
+const particles = new THREE.Points(pGeo, pMat);
+scene.add(particles);
+
+// ── DATA STREAM LINES (C5 to URA4) ──
+const streamLines = [];
+for (let i=0; i<8; i++) {
+  const points = [];
+  for (let j=0; j<=20; j++) points.push(new THREE.Vector3(0,0,0));
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({
+    color: i%2===0 ? 0xFF6820 : 0x00C8FF,
+    transparent: true, opacity: 0.0
+  });
+  const line = new THREE.Line(geo, mat);
+  line.userData.offset = i/8;
+  scene.add(line);
+  streamLines.push(line);
+}
+
+// ── GRID PLANE ──
+const gridHelper = new THREE.GridHelper(30, 30,
+  new THREE.Color(0x1a2040),
+  new THREE.Color(0x0e1428)
+);
+gridHelper.position.y = -3.5;
+gridHelper.material.transparent = true;
+gridHelper.material.opacity = 0.5;
+scene.add(gridHelper);
+
+// ── SCROLL + MOUSE STATE ──
+let scrollY = 0;
+let mouseX = 0, mouseY = 0;
+let targetMouseX = 0, targetMouseY = 0;
+let clock = new THREE.Clock();
+
+window.addEventListener('scroll', () => { scrollY = window.scrollY; });
+window.addEventListener('mousemove', (e) => {
+  targetMouseX = (e.clientX / window.innerWidth  - 0.5) * 2;
+  targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+// ── SCROLL PHASE ──
+function getPhase() {
+  const h = window.innerHeight;
+  return Math.max(0, Math.min(3, scrollY / h));
+}
+
+function lerp(a, b, t) { return a + (b-a)*t; }
+function clamp01(v) { return Math.max(0, Math.min(1, v)); }
+function smoothstep(x) { return x*x*(3-2*x); }
+
+// ── ANIMATION LOOP ──
+function animate() {
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  const dt = clock.getDelta ? 0.016 : 0.016;
+
+  // Smooth mouse
+  mouseX = lerp(mouseX, targetMouseX, 0.04);
+  mouseY = lerp(mouseY, targetMouseY, 0.04);
+
+  const phase = getPhase();
+  const p01 = clamp01(phase);         // 0→1: hero to specs
+  const p12 = clamp01(phase - 1);     // 0→1: specs to solution
+  const p23 = clamp01(phase - 2);     // 0→1: solution to CTA
+  const sp01 = smoothstep(p01);
+  const sp12 = smoothstep(p12);
+
+  // ── C5 ANIMATION ──
+  // Hero: right side floating. Specs: move more left.
+  const c5x = lerp(3.2, 2.0, sp01);
+  const c5y = lerp(-0.3, -0.5, sp01) + Math.sin(t*0.9)*0.12;
+  const c5rotY = lerp(-0.4, -0.7, sp01) + Math.sin(t*0.3)*0.08 + mouseX*0.12;
+  const c5rotX = lerp(0.05, 0.1, sp01) + Math.sin(t*0.5)*0.04 - mouseY*0.06;
+  c5Group.position.set(c5x, c5y, 0);
+  c5Group.rotation.y = c5rotY;
+  c5Group.rotation.x = c5rotX;
+
+  // ── URA4 ANIMATION ──
+  // Hero: above/behind (hidden). Specs: come down and right.
+  const ura4x = lerp(0, -2.2, sp01);
+  const ura4y = lerp(4.5, -0.4, sp01) + Math.sin(t*0.6+1)*0.07;
+  const ura4z = lerp(-3, 0.5, sp01);
+  const ura4rotX = lerp(0.5, 0.08, sp01) + mouseY*0.04;
+  const ura4rotY = lerp(0.1, 0.5, sp01) + Math.sin(t*0.25)*0.06 + mouseX*0.08;
+  ura4Group.position.set(ura4x, ura4y, ura4z);
+  ura4Group.rotation.x = ura4rotX;
+  ura4Group.rotation.y = ura4rotY;
+  const ura4Scale = lerp(0.7, 1.05, sp01);
+  ura4Group.scale.setScalar(ura4Scale);
+
+  // ── RFID WAVES (C5 — orange) ──
+  waves.forEach((ring, i) => {
+    const p = ((t * 0.55 + ring.userData.phase) % 1);
+    ring.scale.setScalar(1 + p * 5.5);
+    ring.material.opacity = (1 - p) * 0.55 * (0.3 + sp01 * 0.7);
+  });
+
+  // ── RFID WAVES (URA4 — blue) ──
+  ura4Waves.forEach((ring) => {
+    const p = ((t * 0.4 + ring.userData.phase) % 1);
+    ring.scale.setScalar(1 + p * 7.0);
+    ring.material.opacity = (1-p) * 0.45 * sp01;
+  });
+
+  // ── DATA STREAMS (between devices) ──
+  const streamAlpha = smoothstep(clamp01(sp12 * 2));
+  streamLines.forEach((line, i) => {
+    const phase = (t * 0.8 + line.userData.offset) % 1;
+    const positions = line.geometry.attributes.position.array;
+    const start = c5Group.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+    const end   = ura4Group.position.clone().add(new THREE.Vector3(0, 0, 0.6));
+    const midX  = (start.x + end.x)/2 + Math.sin(i * 1.2 + t*0.3) * 1.2;
+    const midY  = (start.y + end.y)/2 + Math.cos(i * 0.8) * 0.8;
+    for (let j=0; j<=20; j++) {
+      const tt = j/20;
+      const px = (1-tt)*(1-tt)*start.x + 2*(1-tt)*tt*midX + tt*tt*end.x;
+      const py = (1-tt)*(1-tt)*start.y + 2*(1-tt)*tt*midY + tt*tt*end.y;
+      const pz = lerp(start.z, end.z, tt);
+      positions[j*3]   = px;
+      positions[j*3+1] = py;
+      positions[j*3+2] = pz;
+    }
+    line.geometry.attributes.position.needsUpdate = true;
+    // Traveling dash effect
+    const onCurve = clamp01(Math.abs(phase - 0.5) < 0.15 ? 1 : 0);
+    line.material.opacity = streamAlpha * 0.5;
+  });
+
+  // ── CAMERA PARALLAX ──
+  const camTargetX = mouseX * 0.35 + lerp(0.1, 0, sp01);
+  const camTargetY = -mouseY * 0.22 + lerp(0.1, 0, sp01);
+  const camTargetZ = lerp(9, 8.5, sp01);
+  camera.position.x = lerp(camera.position.x, camTargetX, 0.03);
+  camera.position.y = lerp(camera.position.y, camTargetY, 0.03);
+  camera.position.z = lerp(camera.position.z, camTargetZ, 0.03);
+  camera.lookAt(lerp(0.5, -0.5, sp01), lerp(-0.1, -0.3, sp01), 0);
+
+  // ── PARTICLES DRIFT ──
+  particles.rotation.y = t * 0.008;
+  particles.rotation.x = t * 0.003;
+
+  // ── GRID PULSE ──
+  gridHelper.material.opacity = 0.3 + Math.sin(t*0.5)*0.07;
+  gridHelper.position.y = -3.5 + Math.sin(t*0.2)*0.05;
+
+  // ── LIGHTS PULSE ──
+  orangeLight.intensity = 3.0 + Math.sin(t*1.1)*0.6;
+  blueLight.intensity   = 2.8 + Math.sin(t*0.9+1)*0.5;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── RESIZE ──
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+});
+
+// ── SCROLL REVEAL ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.device-card, .flow-node, .metric').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(30px)';
+  el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>
