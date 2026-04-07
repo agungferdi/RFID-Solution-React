@@ -1,3 +1,103 @@
+import { useMemo, useState } from 'react'
+
+const TAG_CARD_ITEMS = [
+  {
+    label: 'Flexible Anti-metal',
+    note: 'On-metal surfaces',
+    icon: '▱',
+    detail: 'Thin profile for curved assets and metal bins.',
+  },
+  {
+    label: 'ABS Hard Tag',
+    note: 'Rugged assets',
+    icon: '▬',
+    detail: 'Durable shell for fixed industrial equipment.',
+  },
+  {
+    label: 'PCB Tag',
+    note: 'Equipment ID',
+    icon: '◧',
+    detail: 'Stable reads for tools and reusable containers.',
+  },
+  {
+    label: 'UHF Card',
+    note: 'Personnel / trays',
+    icon: '▭',
+    detail: 'Card format for ID, trays, and process checkpoints.',
+  },
+]
+
+const FLOW_MODES = {
+  inventory: {
+    id: 'inventory',
+    label: 'Inventory Flow',
+    description:
+      'Passive tags reflect UHF signals back to readers. Readers forward tag events over LAN or Wi-Fi to middleware, then WMS and ERP receive normalized inventory updates in real time.',
+    laneLabel: 'Balanced uplink over LAN and Wi-Fi',
+    lanPackets: [
+      { delay: 0, color: '#ff6820', dur: 1.8 },
+      { delay: 0.9, color: '#ff6820', dur: 1.8 },
+    ],
+    wifiPackets: [
+      { delay: 0.45, color: '#00c8ff', dur: 1.9 },
+      { delay: 1.35, color: '#00c8ff', dur: 1.9 },
+    ],
+    apiLabel: 'REST API · MQTT · WebSocket',
+    apiPackets: [
+      { delay: 0, dur: 2.0 },
+      { delay: 0.65, dur: 2.0, color: '#ff6820' },
+      { delay: 1.3, dur: 2.0 },
+    ],
+    serverFocus: ['Tag event filtering', 'Zone & location logic', 'Real-time dashboards'],
+    enterpriseFocus: 'wms',
+  },
+  sync: {
+    id: 'sync',
+    label: 'Sync + Health',
+    description:
+      'C72 offline operations and URA4 edge reads are synchronized through middleware with reader health telemetry, status auditing, and resilient data handoff to enterprise systems.',
+    laneLabel: 'Wi-Fi favored for handheld sync bursts',
+    lanPackets: [{ delay: 0.2, color: '#ff6820', dur: 2.4 }],
+    wifiPackets: [
+      { delay: 0, color: '#00c8ff', dur: 1.2 },
+      { delay: 0.4, color: '#00c8ff', dur: 1.2 },
+      { delay: 0.8, color: '#00c8ff', dur: 1.2 },
+    ],
+    apiLabel: 'Sync Stream · Delta Updates · WebSocket',
+    apiPackets: [
+      { delay: 0, dur: 1.5 },
+      { delay: 0.45, dur: 1.5 },
+      { delay: 0.9, dur: 1.5 },
+    ],
+    serverFocus: ['Reader health monitoring', 'Audit logging', 'Duplicate suppression'],
+    enterpriseFocus: 'both',
+  },
+  alerts: {
+    id: 'alerts',
+    label: 'Alerting Mode',
+    description:
+      'Threshold breaches and unusual movement are prioritized by middleware alert rules, then pushed as high-priority events to supervisors and ERP automation channels.',
+    laneLabel: 'Priority bursts with fast alert packets',
+    lanPackets: [
+      { delay: 0, color: '#ff6820', dur: 0.95 },
+      { delay: 0.32, color: '#ff6820', dur: 0.95 },
+      { delay: 0.64, color: '#ff6820', dur: 0.95 },
+    ],
+    wifiPackets: [
+      { delay: 0.18, color: '#00c8ff', dur: 1.05 },
+      { delay: 0.52, color: '#00c8ff', dur: 1.05 },
+    ],
+    apiLabel: 'Alert Stream · Webhook · MQTT',
+    apiPackets: [
+      { delay: 0, dur: 1.05, color: '#ff6820' },
+      { delay: 0.4, dur: 1.05, color: '#00c8ff' },
+      { delay: 0.8, dur: 1.05, color: '#ff6820' },
+    ],
+    serverFocus: ['Alert & threshold engine', 'Reader health monitoring', 'REST / MQTT broker'],
+    enterpriseFocus: 'erp',
+  },
+}
+
 function Packet({ delay = 0, color = '#00c8ff', duration = 1.8 }) {
   return (
     <div
@@ -11,10 +111,10 @@ function Packet({ delay = 0, color = '#00c8ff', duration = 1.8 }) {
   )
 }
 
-function VerticalPipe({ color = 'orange', label, packets = [] }) {
+function VerticalPipe({ color = 'orange', label, packets = [], isActive = true }) {
   return (
     <div className="vpipe-wrap">
-      <div className={`vpipe vpipe-${color}`}>
+      <div className={`vpipe vpipe-${color} ${isActive ? 'is-active' : 'is-dim'}`}>
         {packets.map((p, i) => (
           <Packet key={i} delay={p.delay} color={p.color ?? (color === 'orange' ? '#ff6820' : '#00c8ff')} duration={p.dur ?? 1.8} />
         ))}
@@ -24,13 +124,19 @@ function VerticalPipe({ color = 'orange', label, packets = [] }) {
   )
 }
 
-function SplitPipe() {
+function SplitPipe({ lanPackets = [], wifiPackets = [], laneLabel }) {
   return (
     <div className="split-pipe-row">
       <div className="split-pipe-branch">
-        <div className="split-pipe-line split-orange">
-          <Packet delay={0} color="#ff6820" />
-          <Packet delay={0.9} color="#ff6820" />
+        <div className={`split-pipe-line split-orange ${lanPackets.length ? 'is-active' : 'is-dim'}`}>
+          {lanPackets.map((packet, index) => (
+            <Packet
+              key={`lan-${index}`}
+              delay={packet.delay}
+              color={packet.color ?? '#ff6820'}
+              duration={packet.dur ?? 1.8}
+            />
+          ))}
         </div>
         <div className="split-pipe-badge">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -46,9 +152,15 @@ function SplitPipe() {
       <div className="split-pipe-center-line" />
 
       <div className="split-pipe-branch">
-        <div className="split-pipe-line split-blue">
-          <Packet delay={0.45} color="#00c8ff" />
-          <Packet delay={1.35} color="#00c8ff" />
+        <div className={`split-pipe-line split-blue ${wifiPackets.length ? 'is-active' : 'is-dim'}`}>
+          {wifiPackets.map((packet, index) => (
+            <Packet
+              key={`wifi-${index}`}
+              delay={packet.delay}
+              color={packet.color ?? '#00c8ff'}
+              duration={packet.dur ?? 1.8}
+            />
+          ))}
         </div>
         <div className="split-pipe-badge">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
@@ -60,25 +172,46 @@ function SplitPipe() {
           Wi-Fi 802.11ac
         </div>
       </div>
+
+      <div className="split-pipe-caption">{laneLabel}</div>
     </div>
   )
 }
 
 export function SystemDiagramSection({ isReady, onBack }) {
+  const [activeMode, setActiveMode] = useState('inventory')
+  const [activeTagIndex, setActiveTagIndex] = useState(0)
+
+  const mode = FLOW_MODES[activeMode]
+  const activeTag = TAG_CARD_ITEMS[activeTagIndex]
+
+  const modeButtons = useMemo(() => Object.values(FLOW_MODES), [])
+
   return (
     <section className={`sds-root ${isReady ? 'is-visible' : ''}`}>
       <div className="sds-scroll">
         <header className="sds-header">
           <p className="section-label">End-to-End Architecture</p>
           <h2>Complete RFID Inventory Management</h2>
-          <p className="sds-lead">
-            Passive tags reflect UHF signals back to readers. Readers forward tag events over
-            LAN or Wi-Fi to a central middleware server. WMS and ERP subscribe to processed
-            inventory events in real time.
-          </p>
+          <p className="sds-lead">{mode.description}</p>
+
+          <div className="sds-mode-switch" role="tablist" aria-label="Architecture flow modes">
+            {modeButtons.map((modeButton) => (
+              <button
+                key={modeButton.id}
+                type="button"
+                role="tab"
+                aria-selected={activeMode === modeButton.id}
+                className={`sds-mode-btn ${activeMode === modeButton.id ? 'is-active' : ''}`}
+                onClick={() => setActiveMode(modeButton.id)}
+              >
+                {modeButton.label}
+              </button>
+            ))}
+          </div>
         </header>
 
-        <div className="sds-diagram">
+        <div className={`sds-diagram sds-mode-${activeMode}`}>
 
           {/* ══ 1. TAGS (top) ══ */}
           <div className="sds-row row-tags">
@@ -87,21 +220,21 @@ export function SystemDiagramSection({ isReady, onBack }) {
             </div>
             <div className="row-body">
               <div className="tag-cards">
-                {[
-                  { label: 'Flexible Anti-metal', note: 'On-metal surfaces', icon: '▱' },
-                  { label: 'ABS Hard Tag',        note: 'Rugged assets',     icon: '▬' },
-                  { label: 'PCB Tag',             note: 'Equipment ID',      icon: '◧' },
-                  { label: 'UHF Card',            note: 'Personnel / trays', icon: '▭' },
-                ].map((t) => (
-                  <div key={t.label} className="tag-card">
+                {TAG_CARD_ITEMS.map((t, index) => (
+                  <button
+                    key={t.label}
+                    type="button"
+                    className={`tag-card ${index === activeTagIndex ? 'is-active' : ''}`}
+                    onClick={() => setActiveTagIndex(index)}
+                  >
                     <div className="tag-card-icon">{t.icon}</div>
                     <div className="tag-card-name">{t.label}</div>
                     <div className="tag-card-note">{t.note}</div>
-                  </div>
+                  </button>
                 ))}
               </div>
               <div className="tag-passive-bar">
-                Passive · no battery · backscatter response · EPC 128-bit unique ID · up to 15 m range
+                Selected: {activeTag.label} · {activeTag.detail}
               </div>
             </div>
           </div>
@@ -180,7 +313,11 @@ export function SystemDiagramSection({ isReady, onBack }) {
           </div>
 
           {/* ══ NETWORK PIPE ══ */}
-          <SplitPipe />
+          <SplitPipe
+            lanPackets={mode.lanPackets}
+            wifiPackets={mode.wifiPackets}
+            laneLabel={mode.laneLabel}
+          />
 
           {/* ══ 3. MIDDLEWARE SERVER ══ */}
           <div className="sds-row row-server">
@@ -212,7 +349,12 @@ export function SystemDiagramSection({ isReady, onBack }) {
                     'Real-time dashboards',
                     'Audit logging',
                   ].map((cap) => (
-                    <div key={cap} className="server-cap">{cap}</div>
+                    <div
+                      key={cap}
+                      className={`server-cap ${mode.serverFocus.includes(cap) ? 'is-highlight' : ''}`}
+                    >
+                      {cap}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -223,12 +365,9 @@ export function SystemDiagramSection({ isReady, onBack }) {
           <div className="api-pipe-row">
             <VerticalPipe
               color="blue"
-              label="REST API · MQTT · WebSocket"
-              packets={[
-                { delay: 0,    dur: 2.0 },
-                { delay: 0.65, dur: 2.0, color: '#ff6820' },
-                { delay: 1.3,  dur: 2.0 },
-              ]}
+              label={mode.apiLabel}
+              packets={mode.apiPackets}
+              isActive
             />
           </div>
 
@@ -239,7 +378,13 @@ export function SystemDiagramSection({ isReady, onBack }) {
             </div>
             <div className="row-body ent-pair">
 
-              <div className="ent-card ent-wms">
+              <div
+                className={`ent-card ent-wms ${
+                  mode.enterpriseFocus === 'wms' || mode.enterpriseFocus === 'both'
+                    ? 'is-highlight'
+                    : ''
+                }`}
+              >
                 <div className="ent-card-accent" style={{ background: '#ff6820' }} />
                 <div className="ent-card-head">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6820" strokeWidth="1.6">
@@ -257,7 +402,13 @@ export function SystemDiagramSection({ isReady, onBack }) {
                 </ul>
               </div>
 
-              <div className="ent-card ent-erp">
+              <div
+                className={`ent-card ent-erp ${
+                  mode.enterpriseFocus === 'erp' || mode.enterpriseFocus === 'both'
+                    ? 'is-highlight'
+                    : ''
+                }`}
+              >
                 <div className="ent-card-accent" style={{ background: '#00c8ff' }} />
                 <div className="ent-card-head">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c8ff" strokeWidth="1.6">
