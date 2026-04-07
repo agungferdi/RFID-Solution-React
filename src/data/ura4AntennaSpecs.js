@@ -114,12 +114,12 @@ export const TAG_SPECS = [
   },
   {
     id: 4,
-    model: 'PORTA-F7030EU Flexible Anti-metal Tag',
-    summary: 'Flexible PET anti-metal tag variant optimized for logistics labeling.',
+    model: 'PORTA-F9522 Flexible Anti-metal Tag',
+    summary: 'Flexible on-metal tag profile for retail and logistics tracking workflows.',
     bullets: [
-      '70 x 30 x 0.6 mm slim profile for tight application spaces',
-      'Impinj M730, EPC C1 Gen2 / ISO 18000-6C protocol support',
-      'About 10 m read range with metal-surface application focus',
+      '95 x 22 x 1 mm dimensions with bright PET base and glassine liner',
+      'NXP UCODE 8 with EPC Global Class 1 Gen2 / ISO 18000-6C and EPC 128-bit memory',
+      'About 10 m read range (US handheld 1W), operating temperature -20 C to 80 C',
     ],
   },
   {
