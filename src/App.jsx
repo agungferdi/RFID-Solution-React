@@ -5,6 +5,7 @@ import { CategoryPanelSlider } from './components/CategoryPanelSlider'
 import { SequenceStage } from './components/SequenceStage'
 import { SpecCallouts } from './components/SpecCallouts'
 import { TagsPanel } from './components/TagsPanel'
+import { SystemDiagramSection } from './components/SystemDiagramSection'
 import { Ura4SpecsPanel } from './components/Ura4SpecsPanel'
 import { buildStorySections } from './data/specSections'
 import { ANTENNA_SPECS, TAG_SPECS, URA4_SLIDES } from './data/ura4AntennaSpecs'
@@ -215,12 +216,16 @@ function App() {
                     setManualStage('antenna')
                   }}
                   onNext={() => {
-                    if (!validTagItems.length) {
-                      return
-                    }
-                    setSelectedTag((current) => (current + 1) % validTagItems.length)
+                    setManualStage('system')
                   }}
                   isReady={interactionReady}
+                />
+              ) : storyStage === 'system' ? (
+                <SystemDiagramSection
+                  isReady={interactionReady}
+                  onBack={() => {
+                    setManualStage('tags')
+                  }}
                 />
               ) : (
                 <div className="story-grid">

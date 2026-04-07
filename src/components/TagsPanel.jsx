@@ -38,7 +38,7 @@ export function TagsPanel({ items, activeIndex, onSelect, onBack, onNext, isRead
           Back: Antenna
         </button>
         <button type="button" className="next-button" onClick={onNext}>
-          Next Tag
+          Next: System Overview
         </button>
       </div>
     </section>

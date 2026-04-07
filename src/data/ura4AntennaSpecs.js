@@ -84,7 +84,7 @@ export const ANTENNA_SPECS = [
 export const TAG_SPECS = [
   {
     id: 1,
-    model: 'DTB-F7030T Flexible Anti-metal Tag',
+    model: 'PORTA-F7030T Flexible Anti-metal Tag',
     summary: 'Thin flexible on-metal label for industrial surfaces and curved assets.',
     bullets: [
       '70 x 30 x 0.6 mm with EPC C1 Gen2 / ISO 18000-6C compliance',
@@ -94,7 +94,7 @@ export const TAG_SPECS = [
   },
   {
     id: 2,
-    model: 'DTB-ABS10533UA ABS Anti-Metal Tag',
+    model: 'PORTA-ABS10533UA ABS Anti-Metal Tag',
     summary: 'Longer-range rigid ABS housing for fixed and portable on-metal workflows.',
     bullets: [
       '105 x 33.5 x 10.5 mm, ABS shell with screw/rivet installation',
@@ -104,7 +104,7 @@ export const TAG_SPECS = [
   },
   {
     id: 3,
-    model: 'DTB-ABS7931UA ABS Anti-Metal Tag',
+    model: 'PORTA-ABS7931UA ABS Anti-Metal Tag',
     summary: 'Compact ABS anti-metal tag tuned for balanced range and rugged mounting.',
     bullets: [
       '79 x 31 x 8 mm body, adhesive/screw/rivet mounting support',
@@ -114,7 +114,7 @@ export const TAG_SPECS = [
   },
   {
     id: 4,
-    model: 'DTB-F7030EU Flexible Anti-metal Tag',
+    model: 'PORTA-F7030EU Flexible Anti-metal Tag',
     summary: 'Flexible PET anti-metal tag variant optimized for logistics labeling.',
     bullets: [
       '70 x 30 x 0.6 mm slim profile for tight application spaces',
@@ -124,7 +124,7 @@ export const TAG_SPECS = [
   },
   {
     id: 5,
-    model: 'DTB-PCB9525UA PCB Anti-Metal Tag',
+    model: 'PORTA-PCB9525UA PCB Anti-Metal Tag',
     summary: 'FR4 PCB anti-metal tag for durable industrial and equipment identification.',
     bullets: [
       '95 x 25 x 3.5 mm PCB structure with adhesive or screw mounting',
@@ -134,7 +134,7 @@ export const TAG_SPECS = [
   },
   {
     id: 6,
-    model: 'DTB-UCT8554 UHF Card Tag',
+    model: 'PORTA-UCT8554 UHF Card Tag',
     summary: 'UHF PVC card tag format for non-metal assets and card-based workflows.',
     bullets: [
       '85.5 x 54 x 1 mm card form factor',
