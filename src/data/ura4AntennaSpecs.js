@@ -177,7 +177,7 @@ export const PAPER_LABEL_SPECS = [
   },
   {
     id: 4,
-    model: 'PORTA DTB-V90M UHF RFID Label',
+    model: 'PORTA-V90M UHF RFID Label',
     summary: 'Long-format coated-paper label for retail and logistics non-metal surfaces.',
     bullets: [
       'Tag size 96 x 22 mm with 90 x 20 mm antenna size',
