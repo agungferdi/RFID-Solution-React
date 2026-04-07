@@ -1,19 +1,65 @@
-function FlowDots({ count = 4, direction = 'up', color = '#00c8ff', delay = 0 }) {
+function Packet({ delay = 0, color = '#00c8ff', duration = 1.8 }) {
   return (
-    <div className={`flow-dots flow-${direction}`} style={{ '--dot-color': color }}>
-      {Array.from({ length: count }, (_, i) => (
-        <div key={i} className="flow-dot" style={{ animationDelay: `${delay + i * 0.42}s` }} />
-      ))}
+    <div
+      className="pkt"
+      style={{
+        '--pkt-color': color,
+        animationDelay: `${delay}s`,
+        animationDuration: `${duration}s`,
+      }}
+    />
+  )
+}
+
+function VerticalPipe({ color = 'orange', label, packets = [] }) {
+  return (
+    <div className="vpipe-wrap">
+      <div className={`vpipe vpipe-${color}`}>
+        {packets.map((p, i) => (
+          <Packet key={i} delay={p.delay} color={p.color ?? (color === 'orange' ? '#ff6820' : '#00c8ff')} duration={p.dur ?? 1.8} />
+        ))}
+      </div>
+      {label && <span className="vpipe-label">{label}</span>}
     </div>
   )
 }
 
-function RfRings({ side }) {
+function SplitPipe() {
   return (
-    <div className={`rf-rings rf-rings-${side}`}>
-      <div className="rf-ring" style={{ animationDelay: '0s' }} />
-      <div className="rf-ring" style={{ animationDelay: '0.55s' }} />
-      <div className="rf-ring" style={{ animationDelay: '1.1s' }} />
+    <div className="split-pipe-row">
+      <div className="split-pipe-branch">
+        <div className="split-pipe-line split-orange">
+          <Packet delay={0} color="#ff6820" />
+          <Packet delay={0.9} color="#ff6820" />
+        </div>
+        <div className="split-pipe-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <rect x="2" y="2" width="20" height="8" rx="1.5" />
+            <rect x="2" y="14" width="20" height="8" rx="1.5" />
+            <circle cx="18" cy="6" r="1" fill="currentColor" />
+            <circle cx="18" cy="18" r="1" fill="currentColor" />
+          </svg>
+          LAN / PoE · RJ45
+        </div>
+      </div>
+
+      <div className="split-pipe-center-line" />
+
+      <div className="split-pipe-branch">
+        <div className="split-pipe-line split-blue">
+          <Packet delay={0.45} color="#00c8ff" />
+          <Packet delay={1.35} color="#00c8ff" />
+        </div>
+        <div className="split-pipe-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+            <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+            <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+            <circle cx="12" cy="20" r="1" fill="currentColor" />
+          </svg>
+          Wi-Fi 802.11ac
+        </div>
+      </div>
     </div>
   )
 }
@@ -21,220 +67,215 @@ function RfRings({ side }) {
 export function SystemDiagramSection({ isReady, onBack }) {
   return (
     <section className={`sds-root ${isReady ? 'is-visible' : ''}`}>
-      <div className="sds-inner">
+      <div className="sds-scroll">
         <header className="sds-header">
           <p className="section-label">End-to-End Architecture</p>
-          <h2>Complete RFID Inventory Management System</h2>
-          <p className="section-subtitle">
-            UHF radio interrogates passive tags · readers stream events over LAN or Wi-Fi to a
-            central server · WMS, ERP, and inventory platforms consume real-time data
+          <h2>Complete RFID Inventory Management</h2>
+          <p className="sds-lead">
+            Passive tags reflect UHF signals back to readers. Readers forward tag events over
+            LAN or Wi-Fi to a central middleware server. WMS and ERP subscribe to processed
+            inventory events in real time.
           </p>
         </header>
 
-        <div className="sds-canvas">
+        <div className="sds-diagram">
 
-          {/* ── LAYER 1: ENTERPRISE ── */}
-          <div className="sds-layer layer-enterprise">
-            <div className="sds-layer-badge">Enterprise Systems</div>
-            <div className="ent-row">
-              <div className="ent-node" style={{ '--nc': '#ff6820' }}>
-                <div className="ent-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                    <rect x="2" y="3" width="20" height="14" rx="2" />
-                    <path d="M8 21h8M12 17v4" />
-                  </svg>
+          {/* ══ 1. TAGS (top) ══ */}
+          <div className="sds-row row-tags">
+            <div className="row-aside aside-teal">
+              <span className="row-aside-text">RFID Tags</span>
+            </div>
+            <div className="row-body">
+              <div className="tag-cards">
+                {[
+                  { label: 'Flexible Anti-metal', note: 'On-metal surfaces', icon: '▱' },
+                  { label: 'ABS Hard Tag',        note: 'Rugged assets',     icon: '▬' },
+                  { label: 'PCB Tag',             note: 'Equipment ID',      icon: '◧' },
+                  { label: 'UHF Card',            note: 'Personnel / trays', icon: '▭' },
+                ].map((t) => (
+                  <div key={t.label} className="tag-card">
+                    <div className="tag-card-icon">{t.icon}</div>
+                    <div className="tag-card-name">{t.label}</div>
+                    <div className="tag-card-note">{t.note}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="tag-passive-bar">
+                Passive · no battery · backscatter response · EPC 128-bit unique ID · up to 15 m range
+              </div>
+            </div>
+          </div>
+
+          {/* ══ RF ZONE ══ */}
+          <div className="rf-zone">
+            <div className="rf-zone-waves">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="rf-wave" style={{ animationDelay: `${i * 0.45}s` }} />
+              ))}
+            </div>
+            <div className="rf-zone-label">
+              <span className="rf-zone-freq">UHF · 860 – 960 MHz</span>
+              <span className="rf-zone-proto">EPC C1 Gen2 / ISO 18000-6C · LLRP</span>
+            </div>
+          </div>
+
+          {/* ══ 2. EDGE READERS ══ */}
+          <div className="sds-row row-edge">
+            <div className="row-aside aside-split">
+              <span className="row-aside-text aside-o">URA4</span>
+              <span className="row-aside-divider" />
+              <span className="row-aside-text aside-b">C72</span>
+            </div>
+            <div className="row-body edge-pair">
+
+              {/* URA4 */}
+              <div className="edge-card ura4-card">
+                <div className="edge-card-head">
+                  <span className="edge-live-dot dot-o" />
+                  <span className="edge-card-title">URA4 Fixed Reader</span>
                 </div>
-                <div className="ent-name">WMS</div>
-                <div className="ent-sub">Warehouse Management</div>
-                <ul className="ent-bullets">
-                  <li>Inbound &amp; Outbound</li>
-                  <li>Pick · Pack · Slotting</li>
-                  <li>Location Tracking</li>
+                <p className="edge-card-desc">
+                  Wall or ceiling mounted. Reads up to 1 300+ tags/sec. Powers antennas directly via 4-port TNC array.
+                </p>
+                <div className="ant-ports">
+                  {['5 dBi', '9 dBi', '12 dBi', 'Port 4'].map((p, i) => (
+                    <div key={p} className={`ant-port ${i < 3 ? 'ant-active' : ''}`}>
+                      <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+                        <path d="M5 13V7M1 5a5 5 0 0 1 8 0M3 7.5a3 3 0 0 1 4 0" stroke={i < 3 ? '#ff6820' : '#444'} strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                      <span>{p}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="edge-card-foot">Android 13 · Impinj E Series · PoE 802.3at / DC 12V</div>
+              </div>
+
+              {/* C72 */}
+              <div className="edge-card c72-card">
+                <div className="edge-card-head">
+                  <span className="edge-live-dot dot-b" />
+                  <span className="edge-card-title">C72 Handheld Reader</span>
+                </div>
+                <p className="edge-card-desc">
+                  Operator-held. Full Android app for inventory counting, picking, and verification — works offline and syncs on reconnect.
+                </p>
+                <div className="c72-app-row">
+                  <div className="c72-app-node">
+                    <svg width="14" height="16" viewBox="0 0 14 18" fill="none" stroke="#00c8ff" strokeWidth="1.4">
+                      <rect x="1" y="1" width="12" height="16" rx="2" />
+                      <path d="M4 5h6M4 8h6M4 11h4" />
+                    </svg>
+                    <span>On-device Inventory App</span>
+                  </div>
+                  <div className="c72-chips">
+                    <span className="c72-chip">Offline mode</span>
+                    <span className="c72-chip">Auto-sync</span>
+                    <span className="c72-chip">Barcode + UHF</span>
+                  </div>
+                </div>
+                <div className="edge-card-foot">Android 11/13 · 1 W UHF · 8 000 mAh · IP65</div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ══ NETWORK PIPE ══ */}
+          <SplitPipe />
+
+          {/* ══ 3. MIDDLEWARE SERVER ══ */}
+          <div className="sds-row row-server">
+            <div className="row-aside aside-blue">
+              <span className="row-aside-text">Server</span>
+            </div>
+            <div className="row-body">
+              <div className="server-card">
+                <div className="server-card-left">
+                  <div className="server-icon-box">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00c8ff" strokeWidth="1.4">
+                      <rect x="2" y="2" width="20" height="8" rx="2" />
+                      <rect x="2" y="14" width="20" height="8" rx="2" />
+                      <circle cx="19" cy="6" r="1.2" fill="#00c8ff" />
+                      <circle cx="19" cy="18" r="1.2" fill="#00c8ff" />
+                      <circle cx="16" cy="6" r="1.2" fill="#ff6820" />
+                    </svg>
+                  </div>
+                  <div className="server-card-name">RFID Middleware Server</div>
+                </div>
+                <div className="server-capabilities">
+                  {[
+                    'Tag event filtering',
+                    'Duplicate suppression',
+                    'Zone & location logic',
+                    'REST / MQTT broker',
+                    'Reader health monitoring',
+                    'Alert & threshold engine',
+                    'Real-time dashboards',
+                    'Audit logging',
+                  ].map((cap) => (
+                    <div key={cap} className="server-cap">{cap}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ API PIPE ══ */}
+          <div className="api-pipe-row">
+            <VerticalPipe
+              color="blue"
+              label="REST API · MQTT · WebSocket"
+              packets={[
+                { delay: 0,    dur: 2.0 },
+                { delay: 0.65, dur: 2.0, color: '#ff6820' },
+                { delay: 1.3,  dur: 2.0 },
+              ]}
+            />
+          </div>
+
+          {/* ══ 4. ENTERPRISE (bottom) ══ */}
+          <div className="sds-row row-enterprise">
+            <div className="row-aside aside-mixed">
+              <span className="row-aside-text">Enterprise</span>
+            </div>
+            <div className="row-body ent-pair">
+
+              <div className="ent-card ent-wms">
+                <div className="ent-card-accent" style={{ background: '#ff6820' }} />
+                <div className="ent-card-head">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff6820" strokeWidth="1.6">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <path d="M9 22V12h6v10" />
+                  </svg>
+                  <span className="ent-card-name">WMS</span>
+                </div>
+                <div className="ent-card-full">Warehouse Management System</div>
+                <ul className="ent-list">
+                  <li>Inbound &amp; outbound flows</li>
+                  <li>Pick, pack, and slotting</li>
+                  <li>Location &amp; zone tracking</li>
+                  <li>Stock count reconciliation</li>
                 </ul>
               </div>
 
-              <div className="ent-node" style={{ '--nc': '#00c8ff' }}>
-                <div className="ent-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <div className="ent-card ent-erp">
+                <div className="ent-card-accent" style={{ background: '#00c8ff' }} />
+                <div className="ent-card-head">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00c8ff" strokeWidth="1.6">
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 6v6l4 2" />
                   </svg>
+                  <span className="ent-card-name">ERP</span>
                 </div>
-                <div className="ent-name">ERP</div>
-                <div className="ent-sub">Enterprise Resource Planning</div>
-                <ul className="ent-bullets">
-                  <li>Inventory Ledger</li>
-                  <li>Purchase Orders</li>
-                  <li>Financial Reconciliation</li>
+                <div className="ent-card-full">Enterprise Resource Planning</div>
+                <ul className="ent-list">
+                  <li>Inventory ledger &amp; valuation</li>
+                  <li>Purchase order automation</li>
+                  <li>Financial reconciliation</li>
+                  <li>Supply chain integration</li>
                 </ul>
               </div>
 
-              <div className="ent-node" style={{ '--nc': '#35b39a' }}>
-                <div className="ent-icon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                    <path d="M3 3h18v18H3z" rx="2" />
-                    <path d="M3 9h18M9 21V9" />
-                  </svg>
-                </div>
-                <div className="ent-name">Inventory Backend</div>
-                <div className="ent-sub">Asset &amp; Stock Database</div>
-                <ul className="ent-bullets">
-                  <li>Real-time Stock Levels</li>
-                  <li>Audit Trail &amp; History</li>
-                  <li>Analytics Dashboard</li>
-                </ul>
-              </div>
             </div>
-          </div>
-
-          {/* ── BRIDGE A: REST / MQTT ── */}
-          <div className="sds-bridge bridge-api">
-            <div className="bridge-line">
-              <FlowDots count={5} color="#00c8ff" delay={0} direction="up" />
-              <FlowDots count={5} color="#ff6820" delay={0.7} direction="down" />
-            </div>
-            <div className="bridge-label">REST API · MQTT · WebSocket</div>
-          </div>
-
-          {/* ── LAYER 2: MIDDLEWARE SERVER ── */}
-          <div className="sds-layer layer-server">
-            <div className="sds-layer-badge">Middleware &amp; Server</div>
-            <div className="server-node">
-              <div className="server-glyph">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00c8ff" strokeWidth="1.5">
-                  <rect x="2" y="2" width="20" height="8" rx="2" />
-                  <rect x="2" y="14" width="20" height="8" rx="2" />
-                  <circle cx="6" cy="6" r="1" fill="#00c8ff" />
-                  <circle cx="6" cy="18" r="1" fill="#00c8ff" />
-                </svg>
-              </div>
-              <div className="server-body">
-                <div className="server-title">RFID Middleware &amp; Application Server</div>
-                <div className="server-pills">
-                  <span className="srv-pill">Event Filtering</span>
-                  <span className="srv-pill">Tag Deduplication</span>
-                  <span className="srv-pill">Business Logic</span>
-                  <span className="srv-pill">REST / MQTT Broker</span>
-                  <span className="srv-pill">Reader Management</span>
-                  <span className="srv-pill">Alert Engine</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── BRIDGE B: LAN vs WIFI SPLIT ── */}
-          <div className="sds-bridge bridge-net">
-            <div className="net-split">
-              <div className="net-branch">
-                <div className="net-line net-line-lan">
-                  <FlowDots count={3} color="#ff6820" delay={0.1} direction="down" />
-                </div>
-                <div className="net-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                  </svg>
-                  LAN / PoE · RJ45
-                </div>
-              </div>
-
-              <div className="net-divider" />
-
-              <div className="net-branch">
-                <div className="net-line net-line-wifi">
-                  <FlowDots count={3} color="#00c8ff" delay={0.4} direction="down" />
-                </div>
-                <div className="net-badge">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                    <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                    <circle cx="12" cy="20" r="1" fill="currentColor" />
-                  </svg>
-                  Wi-Fi 802.11ac
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ── LAYER 3: EDGE READERS ── */}
-          <div className="sds-layer layer-edge">
-            <div className="sds-layer-badge">Edge Readers</div>
-            <div className="edge-row">
-
-              {/* URA4 block */}
-              <div className="edge-block ura4-block">
-                <div className="edge-block-head">
-                  <span className="edge-dot dot-orange" />
-                  <span className="edge-block-name">URA4 Fixed Reader</span>
-                </div>
-                <div className="edge-block-sub">Android 13 · Impinj E Series · PoE/DC 12V</div>
-                <div className="ant-strip">
-                  <div className="ant-slot active-slot">
-                    <div className="ant-icon">◢</div>
-                    <div className="ant-label">5 dBi</div>
-                  </div>
-                  <div className="ant-slot active-slot">
-                    <div className="ant-icon">◢</div>
-                    <div className="ant-label">9 dBi</div>
-                  </div>
-                  <div className="ant-slot active-slot">
-                    <div className="ant-icon">◢</div>
-                    <div className="ant-label">12 dBi</div>
-                  </div>
-                  <div className="ant-slot">
-                    <div className="ant-icon">◢</div>
-                    <div className="ant-label">Port 4</div>
-                  </div>
-                </div>
-                <div className="edge-block-note">4-channel TNC ports · Up to 30 m range</div>
-              </div>
-
-              {/* C72 block */}
-              <div className="edge-block c72-block">
-                <div className="edge-block-head">
-                  <span className="edge-dot dot-blue" />
-                  <span className="edge-block-name">C72 Handheld Reader</span>
-                </div>
-                <div className="edge-block-sub">Android 11/13 · 1W UHF · 8000 mAh</div>
-                <div className="c72-app-badge">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00c8ff" strokeWidth="2">
-                    <rect x="5" y="2" width="14" height="20" rx="2" />
-                    <path d="M9 7h6M9 11h6M9 15h4" />
-                  </svg>
-                  On-device Inventory App
-                </div>
-                <div className="c72-conn-row">
-                  <span className="c72-conn-chip">Offline-capable</span>
-                  <span className="c72-conn-chip">Auto-sync</span>
-                  <span className="c72-conn-chip">Barcode + RFID</span>
-                </div>
-                <div className="edge-block-note">Reads up to 1300+ tags/sec · 30 m range</div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── BRIDGE C: UHF RF ── */}
-          <div className="sds-bridge bridge-rf">
-            <RfRings side="left" />
-            <div className="rf-center-label">
-              <div className="rf-freq-badge">UHF · 860 – 960 MHz</div>
-              <div className="rf-proto-line">EPC C1 Gen2 / ISO 18000-6C · LLRP Protocol</div>
-            </div>
-            <RfRings side="right" />
-          </div>
-
-          {/* ── LAYER 4: RFID TAGS ── */}
-          <div className="sds-layer layer-tags">
-            <div className="sds-layer-badge">RFID Tags (Passive)</div>
-            <div className="tag-row">
-              <div className="tag-chip">Flexible Anti-metal</div>
-              <div className="tag-chip">ABS Hard Tag</div>
-              <div className="tag-chip">PCB Tag</div>
-              <div className="tag-chip">UHF Card</div>
-              <div className="tag-chip tag-chip-dim">+ Custom Inlays</div>
-            </div>
-            <div className="tag-note">Passive · No battery · Backscatter response · EPC 128-bit unique ID</div>
           </div>
 
         </div>
