@@ -8,9 +8,19 @@ import { TagsPanel } from './components/TagsPanel'
 import { SystemDiagramSection } from './components/SystemDiagramSection'
 import { Ura4SpecsPanel } from './components/Ura4SpecsPanel'
 import { buildStorySections } from './data/specSections'
-import { ANTENNA_SPECS, TAG_SPECS, URA4_SLIDES } from './data/ura4AntennaSpecs'
+import {
+  ANTENNA_SPECS,
+  PAPER_LABEL_SPECS,
+  TAG_SPECS,
+  URA4_SLIDES,
+} from './data/ura4AntennaSpecs'
 import { useSmoothStoryProgress } from './hooks/useSmoothStoryProgress'
-import { getAntennaManifest, getTagManifest, getUra4Manifest } from './lib/extraAssetManifest'
+import {
+  getAntennaManifest,
+  getPaperLabelManifest,
+  getTagManifest,
+  getUra4Manifest,
+} from './lib/extraAssetManifest'
 import { getFrameManifest } from './lib/frameManifest'
 
 const C72_END = 0.68
@@ -37,6 +47,7 @@ function App() {
   const ura4Frames = useMemo(() => getUra4Manifest(), [])
   const antennaFrames = useMemo(() => getAntennaManifest(), [])
   const tagFrames = useMemo(() => getTagManifest(), [])
+  const paperLabelFrames = useMemo(() => getPaperLabelManifest(), [])
   const scrollProgress = useSmoothStoryProgress(storyRef)
 
   const [loadedCount, setLoadedCount] = useState(0)
@@ -44,6 +55,7 @@ function App() {
   const [manualStage, setManualStage] = useState(null)
   const [selectedAntenna, setSelectedAntenna] = useState(0)
   const [selectedTag, setSelectedTag] = useState(0)
+  const [selectedPaperLabel, setSelectedPaperLabel] = useState(0)
   const postTargetRef = useRef(0)
   const postCurrentRef = useRef(0)
 
@@ -55,8 +67,9 @@ function App() {
       ...ura4Frames.map((frame) => frame.url),
       ...antennaFrames.map((frame) => frame.url),
       ...tagFrames.map((frame) => frame.url),
+      ...paperLabelFrames.map((frame) => frame.url),
     ],
-    [c72Frames, ura4Frames, antennaFrames, tagFrames],
+    [c72Frames, ura4Frames, antennaFrames, tagFrames, paperLabelFrames],
   )
 
   useEffect(() => {
@@ -151,6 +164,11 @@ function App() {
     url: tagFrames.find((frame) => frame.order === item.id)?.url,
   }))
   const validTagItems = tagItems.filter((item) => Boolean(item.url))
+  const paperLabelItems = PAPER_LABEL_SPECS.map((item) => ({
+    ...item,
+    url: paperLabelFrames.find((frame) => frame.order === item.id)?.url,
+  }))
+  const validPaperLabelItems = paperLabelItems.filter((item) => Boolean(item.url))
   const isUra4LastFrame =
     storyStage === 'ura4' && ura4FrameIndex === Math.max(0, ura4Frames.length - 1)
 
@@ -216,15 +234,35 @@ function App() {
                     setManualStage('antenna')
                   }}
                   onNext={() => {
+                    setSelectedPaperLabel(0)
+                    setManualStage('paper-label')
+                  }}
+                  isReady={interactionReady}
+                  backLabel="Back: Antenna"
+                  nextLabel="Next: Paper Label Tags"
+                />
+              ) : storyStage === 'paper-label' ? (
+                <TagsPanel
+                  items={validPaperLabelItems}
+                  activeIndex={selectedPaperLabel}
+                  onSelect={setSelectedPaperLabel}
+                  onBack={() => {
+                    setManualStage('tags')
+                  }}
+                  onNext={() => {
                     setManualStage('system')
                   }}
                   isReady={interactionReady}
+                  title="Paper Label Tags"
+                  subtitle="Click a paper label card to focus the selection and compare profiles."
+                  backLabel="Back: Antimetal Tags"
+                  nextLabel="Next: System Overview"
                 />
               ) : storyStage === 'system' ? (
                 <SystemDiagramSection
                   isReady={interactionReady}
                   onBack={() => {
-                    setManualStage('tags')
+                    setManualStage('paper-label')
                   }}
                 />
               ) : (

@@ -1,4 +1,16 @@
-export function TagsPanel({ items, activeIndex, onSelect, onBack, onNext, isReady }) {
+export function TagsPanel({
+  items,
+  activeIndex,
+  onSelect,
+  onBack,
+  onNext,
+  isReady,
+  sectionLabel = 'RFID Tag Catalog',
+  title = 'Antimetal Tags',
+  subtitle = 'Click a tag card to focus the selection and compare form factors.',
+  backLabel = 'Back: Antenna',
+  nextLabel = 'Next: System Overview',
+}) {
   if (!items?.length) {
     return null
   }
@@ -6,11 +18,9 @@ export function TagsPanel({ items, activeIndex, onSelect, onBack, onNext, isRead
   return (
     <section className={`antenna-panel ${isReady ? 'is-visible' : ''}`}>
       <header className="antenna-header">
-        <p className="section-label">RFID Tag Catalog</p>
-        <h2>Antimetal Tags</h2>
-        <p className="section-subtitle">
-          Click a tag card to focus the selection and compare form factors.
-        </p>
+        <p className="section-label">{sectionLabel}</p>
+        <h2>{title}</h2>
+        <p className="section-subtitle">{subtitle}</p>
       </header>
 
       <div className="antenna-grid tags-grid">
@@ -35,10 +45,10 @@ export function TagsPanel({ items, activeIndex, onSelect, onBack, onNext, isRead
 
       <div className="panel-actions is-visible">
         <button type="button" className="next-button ghost" onClick={onBack}>
-          Back: Antenna
+          {backLabel}
         </button>
         <button type="button" className="next-button" onClick={onNext}>
-          Next: System Overview
+          {nextLabel}
         </button>
       </div>
     </section>

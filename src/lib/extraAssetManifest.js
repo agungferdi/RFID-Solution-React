@@ -17,9 +17,36 @@ const tagModules = import.meta.glob('../assets/tags/tag_*.{png,jpg,jpeg,webp}', 
   import: 'default',
 })
 
+const paperLabelModules = import.meta.glob('../assets/paper_label/*.{png,jpg,jpeg,webp}', {
+  eager: true,
+  import: 'default',
+})
+
 function getNumericSuffix(path, matcher) {
   const match = path.match(matcher)
   return match ? Number(match[1]) : Number.NaN
+}
+
+function getPaperLabelOrder(path) {
+  const normalized = path.toLowerCase()
+
+  if (normalized.includes('eos430')) {
+    return 1
+  }
+
+  if (normalized.includes('eos241')) {
+    return 2
+  }
+
+  if (normalized.includes('eos-261') || normalized.includes('eos261')) {
+    return 3
+  }
+
+  if (normalized.includes('v90m')) {
+    return 4
+  }
+
+  return Number.NaN
 }
 
 export function getUra4Manifest() {
@@ -50,6 +77,17 @@ export function getTagManifest() {
       sourcePath,
       url,
       order: getNumericSuffix(sourcePath, TAG_FILE_MATCH),
+    }))
+    .filter((entry) => Number.isFinite(entry.order))
+    .sort((left, right) => left.order - right.order)
+}
+
+export function getPaperLabelManifest() {
+  return Object.entries(paperLabelModules)
+    .map(([sourcePath, url]) => ({
+      sourcePath,
+      url,
+      order: getPaperLabelOrder(sourcePath),
     }))
     .filter((entry) => Number.isFinite(entry.order))
     .sort((left, right) => left.order - right.order)
