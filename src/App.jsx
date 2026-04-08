@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { BackgroundFx } from './components/BackgroundFx'
 import { AntennaPanel } from './components/AntennaPanel'
 import { CategoryPanelSlider } from './components/CategoryPanelSlider'
+import { MiningFlowModal } from './components/MiningFlowModal'
 import { SequenceStage } from './components/SequenceStage'
 import { SpecCallouts } from './components/SpecCallouts'
 import { TagsPanel } from './components/TagsPanel'
@@ -12,6 +13,23 @@ import { ANTENNA_SPECS, TAG_SPECS, URA4_SLIDES } from './data/ura4AntennaSpecs'
 import { useSmoothStoryProgress } from './hooks/useSmoothStoryProgress'
 import { getAntennaManifest, getTagManifest, getUra4Manifest } from './lib/extraAssetManifest'
 import { getFrameManifest } from './lib/frameManifest'
+
+// Static product images for the mining modal gear cards
+import ura4ModalImg  from './assets/URA4/ura4_1.png'
+import ant9ModalImg  from './assets/URA4/antenna_9db.png'
+import v90mModalImg  from './assets/paper_label/DTB-V90M-chip.webp'
+import r1ModalImg    from './assets/panel/R1.png'
+import cardModalImg  from './assets/tags/card.jpg'
+import c72ModalImg   from './assets/chainway_wireless_barcode_reader_360-1.png'
+
+const MINING_MODAL_IMAGES = {
+  ura4: ura4ModalImg,
+  ant9: ant9ModalImg,
+  v90m: v90mModalImg,
+  r1:   r1ModalImg,
+  card: cardModalImg,
+  c72:  c72ModalImg,
+}
 
 const C72_END = 0.68
 const URA4_END = 0.9
@@ -41,6 +59,7 @@ function App() {
 
   const [loadedCount, setLoadedCount] = useState(0)
   const [postC72Progress, setPostC72Progress] = useState(C72_END)
+  const [miningOpen, setMiningOpen] = useState(false)
   const [manualStage, setManualStage] = useState(null)
   const [selectedAntenna, setSelectedAntenna] = useState(0)
   const [selectedTag, setSelectedTag] = useState(0)
@@ -179,6 +198,11 @@ function App() {
   return (
     <div className="app-root">
       <BackgroundFx />
+      <MiningFlowModal
+        isOpen={miningOpen}
+        onClose={() => setMiningOpen(false)}
+        images={MINING_MODAL_IMAGES}
+      />
 
       <div id="content">
         <div className="app-shell">
@@ -186,6 +210,14 @@ function App() {
             <p className="eyebrow">Porta Nusa Indonesia</p>
             <h1>RFID and Barcode Solutions Porta Nusa Indonesia</h1>
             <p className="hero-subtitle">Present by Muhammad Agung Ferdiansyah</p>
+            <button
+              type="button"
+              className="mining-btn"
+              onClick={() => setMiningOpen(true)}
+            >
+              <span className="mining-btn-dot" aria-hidden="true" />
+              Supply Chain Mining
+            </button>
           </header>
 
           <CategoryPanelSlider />
