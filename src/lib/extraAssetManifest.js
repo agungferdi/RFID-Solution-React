@@ -12,7 +12,12 @@ const antennaModules = import.meta.glob('../assets/URA4/antenna_*db.png', {
   import: 'default',
 })
 
-const tagModules = import.meta.glob('../assets/tags/tag_*.{png,jpg,jpeg,webp}', {
+const tagModules = import.meta.glob('../assets/tags/*.{png,jpg,jpeg,webp}', {
+  eager: true,
+  import: 'default',
+})
+
+const paperLabelModules = import.meta.glob('../assets/paper_label/*.{png,jpg,jpeg,webp}', {
   eager: true,
   import: 'default',
 })
@@ -20,6 +25,42 @@ const tagModules = import.meta.glob('../assets/tags/tag_*.{png,jpg,jpeg,webp}', 
 function getNumericSuffix(path, matcher) {
   const match = path.match(matcher)
   return match ? Number(match[1]) : Number.NaN
+}
+
+function getTagOrder(path) {
+  const normalized = path.toLowerCase()
+
+  if (normalized.includes('f9522')) {
+    return 4
+  }
+
+  return getNumericSuffix(path, TAG_FILE_MATCH)
+}
+
+function getTagPriority(path) {
+  return path.toLowerCase().includes('f9522') ? 0 : 1
+}
+
+function getPaperLabelOrder(path) {
+  const normalized = path.toLowerCase()
+
+  if (normalized.includes('eos430')) {
+    return 1
+  }
+
+  if (normalized.includes('eos241')) {
+    return 2
+  }
+
+  if (normalized.includes('eos-261') || normalized.includes('eos261')) {
+    return 3
+  }
+
+  if (normalized.includes('v90m')) {
+    return 4
+  }
+
+  return Number.NaN
 }
 
 export function getUra4Manifest() {
@@ -45,11 +86,47 @@ export function getAntennaManifest() {
 }
 
 export function getTagManifest() {
-  return Object.entries(tagModules)
+  const sorted = Object.entries(tagModules)
     .map(([sourcePath, url]) => ({
       sourcePath,
       url,
-      order: getNumericSuffix(sourcePath, TAG_FILE_MATCH),
+      order: getTagOrder(sourcePath),
+      priority: getTagPriority(sourcePath),
+    }))
+    .filter((entry) => Number.isFinite(entry.order))
+    .sort((left, right) => {
+      if (left.order !== right.order) {
+        return left.order - right.order
+      }
+
+      if (left.priority !== right.priority) {
+        return left.priority - right.priority
+      }
+
+      return left.sourcePath.localeCompare(right.sourcePath)
+    })
+
+  const uniqueByOrder = new Map()
+
+  sorted.forEach((entry) => {
+    if (!uniqueByOrder.has(entry.order)) {
+      uniqueByOrder.set(entry.order, {
+        sourcePath: entry.sourcePath,
+        url: entry.url,
+        order: entry.order,
+      })
+    }
+  })
+
+  return Array.from(uniqueByOrder.values())
+}
+
+export function getPaperLabelManifest() {
+  return Object.entries(paperLabelModules)
+    .map(([sourcePath, url]) => ({
+      sourcePath,
+      url,
+      order: getPaperLabelOrder(sourcePath),
     }))
     .filter((entry) => Number.isFinite(entry.order))
     .sort((left, right) => left.order - right.order)

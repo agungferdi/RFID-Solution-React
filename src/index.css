@@ -785,6 +785,9 @@ ul {
 ═══════════════════════════════════════════════════ */
 
 .sds-root {
+  --sds-white: #f7fbff;
+  --sds-soft: #e8f1ff;
+  --sds-muted: #cfdef8;
   position: relative;
   z-index: 2;
   height: 100%;
@@ -829,9 +832,42 @@ ul {
   font-family: 'Rajdhani', sans-serif;
   font-size: clamp(0.85rem, 1.1vw, 0.98rem);
   font-weight: 400;
-  color: var(--text-dim);
+  color: var(--sds-soft);
   line-height: 1.55;
   max-width: 680px;
+}
+
+.sds-mode-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sds-mode-btn {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--sds-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.sds-mode-btn:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sds-mode-btn.is-active {
+  border-color: rgba(0, 200, 255, 0.65);
+  background: linear-gradient(135deg, rgba(0, 200, 255, 0.2), rgba(255, 104, 32, 0.16));
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 /* ══════════════════ DIAGRAM GRID ══════════════════ */
@@ -865,7 +901,7 @@ ul {
   text-transform: uppercase;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  color: var(--text-dim);
+  color: var(--sds-muted);
   white-space: nowrap;
 }
 
@@ -913,6 +949,7 @@ ul {
 }
 
 .tag-card {
+  appearance: none;
   border: 1px solid rgba(53, 179, 154, 0.28);
   border-radius: 8px;
   padding: 10px 10px 9px;
@@ -921,11 +958,19 @@ ul {
   gap: 4px;
   position: relative;
   overflow: hidden;
-  transition: border-color 200ms;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 200ms, transform 200ms ease, box-shadow 200ms ease;
 }
 
 .tag-card:hover {
   border-color: rgba(53, 179, 154, 0.55);
+  transform: translateY(-1px);
+}
+
+.tag-card.is-active {
+  border-color: rgba(102, 213, 188, 0.78);
+  box-shadow: 0 0 0 1px rgba(102, 213, 188, 0.35), 0 0 18px rgba(53, 179, 154, 0.22);
 }
 
 .tag-card-icon {
@@ -946,14 +991,14 @@ ul {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.74rem;
   font-weight: 400;
-  color: var(--text-dim);
+  color: var(--sds-soft);
 }
 
 .tag-passive-bar {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.1em;
-  color: rgba(53, 179, 154, 0.55);
+  color: rgba(223, 243, 255, 0.86);
   padding: 4px 0 2px;
 }
 
@@ -1020,7 +1065,7 @@ ul {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.08em;
-  color: var(--text-dim);
+  color: var(--sds-soft);
 }
 
 /* ── EDGE READER CARDS ── */
@@ -1087,7 +1132,7 @@ ul {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.88rem;
   font-weight: 400;
-  color: var(--text-dim);
+  color: var(--sds-soft);
   line-height: 1.45;
   margin: 0;
 }
@@ -1119,7 +1164,7 @@ ul {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.54rem;
   letter-spacing: 0.04em;
-  color: var(--text-dim);
+  color: var(--sds-soft);
 }
 
 .ant-active span {
@@ -1160,7 +1205,7 @@ ul {
   padding: 2px 8px;
   border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text-dim);
+  color: var(--sds-soft);
   background: rgba(255, 255, 255, 0.03);
 }
 
@@ -1168,7 +1213,7 @@ ul {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.07em;
-  color: var(--text-dim);
+  color: var(--sds-soft);
   opacity: 0.7;
 }
 
@@ -1177,6 +1222,7 @@ ul {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 0;
   padding: 4px 0 4px 84px;
 }
@@ -1196,6 +1242,15 @@ ul {
   position: relative;
   overflow: hidden;
   border-radius: 2px;
+  transition: opacity 180ms ease, box-shadow 180ms ease;
+}
+
+.split-pipe-line.is-active {
+  opacity: 1;
+}
+
+.split-pipe-line.is-dim {
+  opacity: 0.4;
 }
 
 .split-orange {
@@ -1214,8 +1269,19 @@ ul {
   font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--sds-soft);
   white-space: nowrap;
+}
+
+.split-pipe-caption {
+  width: 100%;
+  text-align: center;
+  margin-top: 5px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--sds-soft);
+  opacity: 0.9;
 }
 
 .split-pipe-center-line {
@@ -1315,6 +1381,13 @@ ul {
   border: 1px solid rgba(0, 200, 255, 0.2);
   background: rgba(0, 200, 255, 0.06);
   color: rgba(0, 200, 255, 0.8);
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.server-cap.is-highlight {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 /* ── API PIPE ── */
@@ -1338,6 +1411,15 @@ ul {
   position: relative;
   overflow: hidden;
   border-radius: 2px;
+  transition: opacity 180ms ease;
+}
+
+.vpipe.is-active {
+  opacity: 1;
+}
+
+.vpipe.is-dim {
+  opacity: 0.4;
 }
 
 .vpipe-blue {
@@ -1349,7 +1431,7 @@ ul {
   font-size: 0.54rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--sds-soft);
   white-space: nowrap;
 }
 
@@ -1405,7 +1487,7 @@ ul {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.8rem;
   font-weight: 500;
-  color: var(--text-dim);
+  color: var(--sds-soft);
 }
 
 .ent-list {
@@ -1420,10 +1502,22 @@ ul {
   font-family: 'Rajdhani', sans-serif;
   font-size: 0.88rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--sds-soft);
   padding-left: 12px;
   position: relative;
   line-height: 1.3;
+}
+
+.ent-card.is-highlight {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 20px rgba(0, 200, 255, 0.18);
+}
+
+.sds-mode-alerts .server-card {
+  box-shadow: 0 0 0 1px rgba(255, 104, 32, 0.25), 0 0 24px rgba(255, 104, 32, 0.2);
+}
+
+.sds-mode-sync .c72-card {
+  box-shadow: 0 0 0 1px rgba(0, 200, 255, 0.3), 0 0 20px rgba(0, 200, 255, 0.18);
 }
 
 .ent-list li::before {

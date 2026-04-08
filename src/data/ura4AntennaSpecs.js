@@ -114,12 +114,12 @@ export const TAG_SPECS = [
   },
   {
     id: 4,
-    model: 'PORTA-F7030EU Flexible Anti-metal Tag',
-    summary: 'Flexible PET anti-metal tag variant optimized for logistics labeling.',
+    model: 'PORTA-F9522 Flexible Anti-metal Tag',
+    summary: 'Flexible on-metal tag profile for retail and logistics tracking workflows.',
     bullets: [
-      '70 x 30 x 0.6 mm slim profile for tight application spaces',
-      'Impinj M730, EPC C1 Gen2 / ISO 18000-6C protocol support',
-      'About 10 m read range with metal-surface application focus',
+      '95 x 22 x 1 mm dimensions with bright PET base and glassine liner',
+      'NXP UCODE 8 with EPC Global Class 1 Gen2 / ISO 18000-6C and EPC 128-bit memory',
+      'About 10 m read range (US handheld 1W), operating temperature -20 C to 80 C',
     ],
   },
   {
@@ -140,6 +140,49 @@ export const TAG_SPECS = [
       '85.5 x 54 x 1 mm card form factor',
       'Impinj M730, EPC 128 bits and unique TID 96 bits',
       'More than 15 m read range in US standard handheld tests',
+    ],
+  },
+]
+
+export const PAPER_LABEL_SPECS = [
+  {
+    id: 1,
+    model: 'PORTA EOS-430 M830 Paper Label',
+    summary: 'Narrow paper label profile for apparel and item-level retail tagging.',
+    bullets: [
+      'Antenna size 70 x 8 mm with 74 x 12 mm die-cut finish size',
+      'Impinj M830 IC with EPC Class 1 Gen2 / ISO 18000-63 and EPC 128-bit memory',
+      'UHF global 860-960 MHz operating band with -40 C to +85 C temperature range',
+    ],
+  },
+  {
+    id: 2,
+    model: 'PORTA EOS-241 M730 Paper Label',
+    summary: 'Compact wet inlay format for inventory visibility and supply-chain labeling.',
+    bullets: [
+      'Antenna size 42 x 16 mm with 44 x 18 mm die-cut finish size',
+      'Impinj M730 IC with EPC Class 1 Gen2 / ISO 18000-63 and EPC 128-bit memory',
+      'UHF global 860-960 MHz, non-metal application, -40 C to +85 C operating range',
+    ],
+  },
+  {
+    id: 3,
+    model: 'PORTA EOS-261 M730 Paper Label',
+    summary: 'Balanced paper sticker design for item-level tagging across logistics flows.',
+    bullets: [
+      'Antenna size 44 x 20 mm with 47 x 25 mm die-cut finish size',
+      'Impinj M730 IC with EPC Class 1 Gen2 / ISO 18000-63 and EPC 128-bit memory',
+      'UHF global 860-960 MHz, non-metal application, -40 C to +85 C operating range',
+    ],
+  },
+  {
+    id: 4,
+    model: 'PORTA-V90M UHF RFID Label',
+    summary: 'Long-format coated-paper label for retail and logistics non-metal surfaces.',
+    bullets: [
+      'Tag size 96 x 22 mm with 90 x 20 mm antenna size',
+      'Impinj M700 series IC with EPC Global Class 1 Gen2 / ISO 18000-6C protocol',
+      'Read range >= 10 m (US standard handheld 1W), operating temperature -20 C to 80 C',
     ],
   },
 ]
